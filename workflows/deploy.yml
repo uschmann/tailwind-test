@@ -1,0 +1,56 @@
+name: Deploy static content to Pages
+
+on:
+  push:
+    branches: ["deploy"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-running: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install Tailwind CLI and Build CSS
+        run: |
+          # Tailwind CLI direkt herunterladen (kein schweres npm-Setup nötig)
+          curl -sLO https://github.com/tailwindlabs/tailwindcss/releases/latest/download/tailwindcss-linux-x64
+          chmod +x tailwindcss-linux-x64
+          mkdir -p dist
+          # CSS kompilieren (wichtig: Pfade an deine Struktur anpassen)
+          ./tailwindcss-linux-x64 -i ./src/input.css -o ./index.css --minify
+          # Wir kopieren das Ergebnis so, dass es im Root-Verzeichnis liegt für Pages
+          # Passe alternativ den HTML-Pfad an, falls du einen dist-Ordner nutzt.
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        path: '.' # Lädt das gesamte Verzeichnis hoch (index.html, index.css etc.)
+
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
