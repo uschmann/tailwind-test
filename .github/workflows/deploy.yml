@@ -12,7 +12,7 @@ permissions:
 
 concurrency:
   group: "pages"
-  cancel-in-running: false
+  cancel-in-progress: false # Korrigiert von cancel-in-running
 
 jobs:
   build:
@@ -28,21 +28,18 @@ jobs:
 
       - name: Install Tailwind CLI and Build CSS
         run: |
-          # Tailwind CLI direkt herunterladen (kein schweres npm-Setup nötig)
           curl -sLO https://github.com/tailwindlabs/tailwindcss/releases/latest/download/tailwindcss-linux-x64
           chmod +x tailwindcss-linux-x64
           mkdir -p dist
-          # CSS kompilieren (wichtig: Pfade an deine Struktur anpassen)
           ./tailwindcss-linux-x64 -i ./src/input.css -o ./index.css --minify
-          # Wir kopieren das Ergebnis so, dass es im Root-Verzeichnis liegt für Pages
-          # Passe alternativ den HTML-Pfad an, falls du einen dist-Ordner nutzt.
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
-        path: '.' # Lädt das gesamte Verzeichnis hoch (index.html, index.css etc.)
+        with:
+          path: '.' # Korrigiert: 'path' muss unter 'with:' eingerückt sein
 
   deploy:
     environment:
